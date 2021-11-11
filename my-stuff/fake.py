@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS fake (
         while True:
             time.sleep(1)
             self.insert(sql="INSERT INTO fake VALUES (?,?)",
-                        params=[self.now(), self.name])
+                        parameters=[self.now(), self.name])
 
 
 if __name__ == "__main__":

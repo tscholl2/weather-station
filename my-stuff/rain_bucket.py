@@ -20,4 +20,5 @@ CREATE TABLE IF NOT EXISTS rain (
             print("pressed!")
             self.button.wait_for_release()
             print("released!")
-            self.insert(sql="INSERT INTO rain VALUES (?)", params=[self.now()])
+            self.insert(sql="INSERT INTO rain VALUES (?)",
+                        parameters=[self.now()])

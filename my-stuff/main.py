@@ -2,13 +2,14 @@ import multiprocessing
 import time
 from fake import FakeSensor
 import queue
+import sqlite3
 
 DATABASE = "data.sqlite.db"
 
 
 if __name__ == '__main__':
     ctx = multiprocessing.get_context('spawn')
-    q = ctx.Queue(maxsize=1000)
+    q = ctx.Queue(maxsize=10000)
     sensors = [
         FakeSensor(q),
         FakeSensor(q),
@@ -19,29 +20,16 @@ if __name__ == '__main__':
     ]
     for p in processes:
         p.start()
-    time.sleep(5)
     while True:
+        time.sleep(5)
+        con = sqlite3.connect(DATABASE)
+        con.executescript("\n".join(s.schema() for s in sensors))
         try:
             item = q.get(block=True, timeout=5)
+            con.execute(**item)
             print(f"item! '{item}'")
         except queue.Empty:
             pass
-
-"""
-con = sqlite3.connect('example.db')
-cur = con.cursor()
-
-# Create table
-cur.execute('''CREATE TABLE stocks
-               (date text, trans text, symbol text, qty real, price real)''')
-
-# Insert a row of data
-cur.execute("INSERT INTO stocks VALUES ('2006-01-05','BUY','RHAT',100,35.14)")
-
-# Save (commit) the changes
-con.commit()
-
-# We can also close the connection if we are done with it.
-# Just be sure any changes have been committed or they will be lost.
-con.close()
-"""
+        con.commit()
+        con.close()
+        # TODO: run backup
