@@ -1,17 +1,38 @@
 import bme280
 import smbus2
-from time import sleep
+import sensor_logger
+import time
 
-port = 1
-address = 0x77 # Adafruit BME280 address. Other BME280s may be different
-bus = smbus2.SMBus(port)
 
-bme280.load_calibration_params(bus,address)
+class SensorBME280(sensor_logger.SensorLogger):
+    def __init__(self):
+        super().__init__()
+        port = 1
+        self.address = 0x77  # Adafruit BME280 address. Other BME280s may be different
+        self.bus = smbus2.SMBus(port)
+        bme280.load_calibration_params(self.bus, self.address)
 
-while True:
-    bme280_data = bme280.sample(bus,address)
-    humidity  = bme280_data.humidity
-    pressure  = bme280_data.pressure
-    ambient_temperature = bme280_data.temperature
-    print(humidity, pressure, ambient_temperature)
-    sleep(1)
+    def schema(self):
+        return f"""
+CREATE TABLE IF NOT EXISTS bme280 (
+	timestamp NUMBER PRIMARY KEY NOT NULL,
+    humidity NUMBER,
+    pressure NUMBER,
+    temperature NUMBER
+);"""
+
+    def run(self):
+        while True:
+            time.sleep(30)
+            now = self.now()
+            bme280_data = bme280.sample(self.bus, self.address)
+            humidity = bme280_data.humidity
+            pressure = bme280_data.pressure
+            temperature = bme280_data.temperature
+            self.insert(sql="INSERT INTO bme280 (timestamp,humidity,pressure,temperature) VALUES (?,?,?,?)",
+                        parameters=[
+                            now,
+                            humidity,
+                            pressure,
+                            temperature,
+                        ])
