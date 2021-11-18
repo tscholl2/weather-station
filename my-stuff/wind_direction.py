@@ -1,5 +1,6 @@
 # https://tutorials-raspberrypi.com/mcp3008-read-out-analog-signals-on-the-raspberry-pi/
 from spidev import SpiDev
+from sensor_logger import SensorLogger
 
 class MCP3008:
     def __init__(self, bus = 0, device = 0):
@@ -16,6 +17,19 @@ class MCP3008:
         return data
     def close(self):
         self.spi.close()
+
+VALUES = []
+
+class WindDirectionSensor(SensorLogger):
+    def setup(self):
+        pass
+
+    def schema(self):
+        return f"""
+CREATE TABLE IF NOT EXISTS wind_direction (
+	timestamp NUMBER PRIMARY KEY NOT NULL,
+    direction NUMBER
+"""
 
 if __name__ == "__main__":
     mcp = MCP3008()
