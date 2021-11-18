@@ -7,7 +7,7 @@ import time
 
 
 def cpu_temp():
-    with open("sys/class/thermal/thermal_zone0/temp") as f:
+    with open("/sys/class/thermal/thermal_zone0/temp") as f:
         raw = f.read()
         return float(raw)/1000
 
@@ -23,7 +23,10 @@ def gpu_temp():
         print(f"FAIL: gpu temp: {result.stderr}")
 
 
-class OnBoardSensors(sensor_logger.SensorLogger):
+class OnBoardSensor(sensor_logger.SensorLogger):
+    def setup(self):
+        pass
+
     def schema(self):
         return f"""
 CREATE TABLE IF NOT EXISTS onboard (
@@ -35,8 +38,6 @@ CREATE TABLE IF NOT EXISTS onboard (
 
     def run(self):
         while True:
-            self.insert(sql="INSERT INTO onboard VALUES (?,?,?)", params=[
-                self.now(),
-                cpu_temp(),
-                gpu_temp()])
-            time.sleep(1)
+            self.insert(sql="INSERT INTO onboard VALUES (?,?,?)",
+                        parameters=[self.now(), cpu_temp(), gpu_temp()])
+            time.sleep(30)

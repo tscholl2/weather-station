@@ -1,18 +1,17 @@
 import sensor_logger
-import multiprocessing
 import time
 import random
 
 
-class FakeSensor(sensor_logger.SensorLogger):
-    def __init__(self, Q: multiprocessing.Queue):
-        super().__init__(Q)
+class FakeSensor(sensor_logger.SensorLogger):        
+    def setup(self):
         self.name = random.randint(0, 10)
 
     def schema(self):
         return f"""
 CREATE TABLE IF NOT EXISTS fake (
-	timestamp NUMBER PRIMARY KEY NOT NULL
+	timestamp NUMBER PRIMARY KEY NOT NULL,
+    name NUMBER NOT NULL
 );
 """
 
