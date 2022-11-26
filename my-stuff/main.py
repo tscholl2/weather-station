@@ -12,7 +12,7 @@ DATABASE = "data.db"
 
 
 if __name__ == '__main__':
-    ctx = multiprocessing.get_context('spawn')
+    ctx = multiprocessing.get_context()
     q = ctx.Queue(maxsize=10000)
     sensors = [
         FakeSensor(q),
@@ -23,7 +23,7 @@ if __name__ == '__main__':
         BME280Sensor(q),
     ]
     processes = [
-        multiprocessing.Process(target=s)
+        ctx.Process(target=s)
         for s in sensors
     ]
     for p in processes:

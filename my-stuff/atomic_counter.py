@@ -1,53 +1,59 @@
-# https://gist.github.com/benhoyt/8c8a8d62debe8e5aa5340373f9c509c7
-"""An atomic, thread-safe incrementing counter."""
-
-import threading
+import multiprocessing
+import ctypes
 
 
 class AtomicCounter:
     """An atomic, thread-safe incrementing counter.
+    >>> ctx = multiprocessing.get_context()
     >>> counter = AtomicCounter()
     >>> counter.increment()
     1
     >>> counter.increment(4)
     5
-    >>> counter = AtomicCounter(42.5)
+    >>> counter = AtomicCounter(initial=42)
     >>> counter.value
-    42.5
-    >>> counter.increment(0.5)
-    43.0
+    42
+    >>> counter.increment(1)
+    43
     >>> counter = AtomicCounter()
     >>> def incrementor():
     ...     for i in range(100000):
     ...         counter.increment()
-    >>> threads = []
+    >>> p_arr = []
     >>> for i in range(4):
-    ...     thread = threading.Thread(target=incrementor)
-    ...     thread.start()
-    ...     threads.append(thread)
-    >>> for thread in threads:
-    ...     thread.join()
+    ...     p = ctx.Process(target=incrementor)
+    ...     p.start()
+    ...     p_arr.append(p)
+    >>> for p in p_arr:
+    ...     p.join()
     >>> counter.value
     400000
     """
 
-    def __init__(self, initial=0):
+    def __init__(self, ctx=multiprocessing, initial=0):
         """Initialize a new atomic counter to given initial value (default 0)."""
+        self._counter = ctx.Value(ctypes.c_int)
         self.value = initial
-        self._lock = threading.Lock()
+
+    @property
+    def value(self):
+        return self._counter.value
+
+    @value.setter
+    def value(self, val):
+        with self._counter.get_lock():
+            self._counter.value = val
 
     def increment(self, num=1):
         """Atomically increment the counter by num (default 1) and return the
         new value.
         """
-        with self._lock:
-            self.value += num
-            return self.value
+        with self._counter.get_lock():
+            self._counter.value += num
+            return self._counter.value
 
-    def reset(self, initial=0):
-        with self._lock:
-            value, self.value = self.value, initial
-            return value
+    def reset(self):
+        self.value = 0
 
 
 if __name__ == '__main__':
