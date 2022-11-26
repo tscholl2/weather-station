@@ -53,7 +53,9 @@ class AtomicCounter:
             return self._counter.value
 
     def reset(self):
+        val = int(self.value)
         self.value = 0
+        return val
 
 
 if __name__ == '__main__':
